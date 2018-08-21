@@ -1,45 +1,136 @@
-const Event = require('vorge/core/Event');
+const Event = require('./Event');
 
-module.exports = class Widget extends Event.Emitter {
+const diff = require('../system/diff');
+const paint = require('../system/paint');
+const symbols = require('../system/symbols');
 
-    constructor (options) {
-        super('widget');
+class Widget extends Event.Emitter {
 
-        Object.apply(this, {
-            position: {
-                x: options.x || 0,
-                y: options.y || 0
-            },
-            size: {
-                width: options.width || 0,
-                height: options.height || 0
-            },
-            style: options.style,
-            texture: options.texture
+    [ symbols.RENDER ] () {
+        const before = this[ symbols.TREE ];
+        const after = this.render();
+
+        if (before.length > after.length) {
+            this[ symbols.TREE ] = before.map((widget, i) => diff(widget, after[ i ]));
+        }
+        else {
+            this[ symbols.TREE ] = after.map((widget, i) => diff(before[ i ], widget));
+        }
+
+        for (const widget of this[ symbols.TREE ]) {
+            widget[ symbols.PARENT ] = this;
+        }
+
+        this.emit('render', null);
+    }
+
+    [ symbols.PAINT ] () {
+        for (const widget of this[ symbols.TREE ]) {
+            paint(widget);
+        }
+
+        this.emit('paint', null);
+    }
+
+    [ symbols.UPDATE ] () {
+        this.emit('update', null);
+
+        global.requestAnimationFrame(() => {
+            this[ symbols.RENDER ]();
+
+            global.requestAnimationFrame(() => {
+                this[ symbols.PAINT ]();
+            });
         });
     }
 
+    get children () {
+        return this[ symbols.CHILDREN ];
+    }
+
+    get parent () {
+        return this[ symbols.PARENT ];
+    }
+
+    get state () {
+        return this[ symbols.STATE ];
+    }
+
+    get style () {
+        return { };
+    }
+
+    constructor (properties, children) {
+        super();
+
+        Object.assign(this, this.constructor.defaultProperties, properties, {
+            [ symbols.CACHE ]: null,
+            [ symbols.CHILDREN ]: children,
+            [ symbols.CYCLE ]: new Widget.LifeCycle(this),
+            [ symbols.PARENT ]: null,
+            [ symbols.STATE ]: new Widget.State(this, Object.entries(this.constructor.initialState)),
+            [ symbols.STYLE ]: new Widget.Style(this),
+            [ symbols.TREE ]: [ ]
+        });
+
+        global.requestAnimationFrame(() => {
+            this[ symbols.RENDER ]();
+
+            global.requestAnimationFrame(() => {
+                this[ symbols.PAINT ]();
+
+                global.requestAnimationFrame(() => {
+                    this.emit('ready', null);
+                });
+            });
+        });
+    }
+
+    update () {
+        this[ symbols.UPDATE ]();
+    }
+
     render () {
-        const { position, size } = this;
-        const { x, y } = position;
-        const { width, height } = size;
-
-        const sample = new Float32Array([
-            0, 0,
-            1, 0,
-            0, 1,
-            0, 1,
-            1, 0,
-            1, 1
-        ]);
-
-        const coordinates = new Float32Array([
-            (x | 0), (y | 0),
-            (x | 0) + width, (y | 0),
-            (x | 0), (y | 0) + height,
-            (x | 0), (y | 0) + height,
-            (x | 0) + width, (y | 0),
-            (x | 0) + width, (y | 0) + height
-        ]);
+        return [ ];
     }
 };
+
+Widget.defaultProperties = { };
+Widget.initialState = { };
+
+Widget.LifeCycle = class WidgetLifeCycle {
+
+    constructor (widget) {
+        widget.subscribe('render').forEach(event => this.handle(event));
+        widget.subscribe('update').forEach(event => this.handle(event));
+        widget.subscribe('ready').forEach(event => this.handle(event));
+        this.widget = widget;
+    }
+
+    handle (event) {
+        const callback = `onWidget${ event.type.replace(/^(.)/, c => c.toUpperCase()) }`;
+
+        if (callback in this.widget) {
+            this.widget[ callback ](event);
+        }
+    }
+};
+
+Widget.State = class WidgetState extends Map {
+
+    constructor (widget, data) {
+        super(data);
+        this.widget = widget;
+    }
+
+    set (key, value) {
+        super.set(key, value);
+        this.widget.update();
+    }
+};
+
+Widget.Style = class WidgetStyle extends Style {
+
+};
+
+module.exports = Widget;
