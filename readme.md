@@ -19,7 +19,7 @@ function main () {
     mount(canvas, { width: 800, height: 600 }, [
         render(Frame, { title: 'Foo Bar' }, [
             render(Pane, { }, [
-                render(Button, { text: 'Ok' })
+                render(Button, { text: 'Ok', onClick: () => alert('clicked') })
             ]);
         ])
     ]);
