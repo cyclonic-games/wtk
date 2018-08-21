@@ -67,6 +67,7 @@ class Widget extends Event.Emitter {
             [ symbols.CACHE ]: null,
             [ symbols.CHILDREN ]: children,
             [ symbols.CYCLE ]: new Widget.LifeCycle(this),
+            [ symbols.INTERFACE ]: null,
             [ symbols.PARENT ]: null,
             [ symbols.STATE ]: new Widget.State(this, Object.entries(this.constructor.initialState)),
             [ symbols.STYLE ]: new Widget.Style(this),
