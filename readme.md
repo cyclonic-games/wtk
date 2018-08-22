@@ -25,6 +25,11 @@ class UserInterface extends Widget {
                 myPane: {
                     fill: rgba(255, 0, 0, 255)
                 }
+            },
+            hover: {
+                myPane: {
+                    fill: rgba(0, 255, 0, 255)
+                }
             }
         };
     }
