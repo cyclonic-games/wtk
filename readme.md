@@ -9,6 +9,8 @@ const Widget = require('wtk/core/Widget');
 const mount = require('wtk/system/mount');
 const render = require('wtk/system/render');
 
+const rgba = require('wtk/color/rgba');
+
 const Button = require('wtk/widgets/Button');
 const Frame = require('wtk/widgets/Frame');
 const Pane = require('wtk/widgets/Pane');
@@ -17,10 +19,20 @@ const canvas = global.document.createElement('canvas');
 
 class UserInterface extends Widget {
 
+    get style () {
+        return {
+            default: {
+                myPane: {
+                    fill: rgba(255, 0, 0, 255)
+                }
+            }
+        };
+    }
+
     render () {
         return [
-            render(Frame, { title: 'Foo Bar' }, [
-                render(Pane, { }, [
+            render(Frame, { title: 'Foo' }, [
+                render(Pane, { id: 'myPane' }, [
                     render(Button, { text: 'Ok', onClick () { alert('clicked') } })
                 ])
             ])
