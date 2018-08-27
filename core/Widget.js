@@ -1,7 +1,6 @@
 const Event = require('./Event');
 
 const diff = require('../system/diff');
-const paint = require('../system/paint');
 const symbols = require('../system/symbols');
 
 class Widget extends Event.Emitter {
@@ -25,16 +24,11 @@ class Widget extends Event.Emitter {
     }
 
     [ symbols.PAINT ] () {
-        for (const widget of this[ symbols.TREE ]) {
-            paint(widget);
-        }
-
+        // TODO
         this.emit('paint', null);
     }
 
     [ symbols.UPDATE ] () {
-        this.emit('update', null);
-
         global.requestAnimationFrame(() => {
             this[ symbols.RENDER ]();
 
@@ -42,6 +36,8 @@ class Widget extends Event.Emitter {
                 this[ symbols.PAINT ]();
             });
         });
+
+        this.emit('update', null);
     }
 
     get children () {
@@ -60,18 +56,20 @@ class Widget extends Event.Emitter {
         return { };
     }
 
-    constructor (properties, children) {
+    constructor (properties = { }, children = [ ]) {
         super();
 
         Object.assign(this, this.constructor.defaultProperties, properties, {
-            [ symbols.CACHE ]: null,
+            [ symbols.CACHE ]: global.document.createElement('canvas'),
             [ symbols.CHILDREN ]: children,
             [ symbols.CYCLE ]: new Widget.LifeCycle(this),
+            [ symbols.GEOMETRY ]: [ ],
             [ symbols.INTERFACE ]: null,
             [ symbols.PARENT ]: null,
             [ symbols.STATE ]: new Widget.State(this, Object.entries(this.constructor.initialState)),
             [ symbols.STYLE ]: new Widget.Style(this),
-            [ symbols.TREE ]: [ ]
+            [ symbols.TREE ]: [ ],
+            [ symbols.WEBGL ]: null
         });
 
         global.requestAnimationFrame(() => {
@@ -85,14 +83,20 @@ class Widget extends Event.Emitter {
                 });
             });
         });
+
+        this.emit('construct', null);
     }
 
     update () {
         this[ symbols.UPDATE ]();
     }
 
+    paint () {
+        void 0;
+    }
+
     render () {
-        return [ ];
+        return this.children;
     }
 };
 
@@ -102,9 +106,10 @@ Widget.initialState = { };
 Widget.LifeCycle = class WidgetLifeCycle {
 
     constructor (widget) {
+        widget.subscribe('construct').forEach(event => this.handle(event));
         widget.subscribe('render').forEach(event => this.handle(event));
-        widget.subscribe('update').forEach(event => this.handle(event));
         widget.subscribe('ready').forEach(event => this.handle(event));
+        widget.subscribe('update').forEach(event => this.handle(event));
         this.widget = widget;
     }
 
@@ -130,8 +135,31 @@ Widget.State = class WidgetState extends Map {
     }
 };
 
-Widget.Style = class WidgetStyle extends Style {
+Widget.Style = class WidgetStyle {
 
+    get fill () {
+
+    }
+
+    get height () {
+
+    }
+
+    get sample () {
+
+    }
+
+    get stroke () {
+
+    }
+
+    get width () {
+
+    }
+
+    constructor (widget) {
+        this.widget = widget;
+    }
 };
 
 module.exports = Widget;
