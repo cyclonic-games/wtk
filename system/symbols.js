@@ -12,5 +12,7 @@ module.exports = {
     STYLE: Symbol('STYLE'),
     TREE: Symbol('TREE'),
     UPDATE: Symbol('UPDATE'),
-    WEBGL: Symbol('WEBGL')
+    WEBGL: Symbol('WEBGL'),
+    X: Symbol('X'),
+    Y: Symbol('Y')
 };

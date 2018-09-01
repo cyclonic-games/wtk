@@ -9,6 +9,10 @@ class Widget extends Event.Emitter {
     [ symbols.RENDER ] () {
         state.get(symbols.OWNER).push(this);
 
+        for (const child of this[ symbols.CHILDREN ]) {
+            child[ symbols.PARENT ] = this;
+        }
+
         const before = this[ symbols.TREE ];
         const after = this.render();
 
@@ -94,10 +98,6 @@ class Widget extends Event.Emitter {
             [ symbols.Y ]: 0
         });
 
-        for (const child of children) {
-            child[ symbols.PARENT ] = this;
-        }
-
         global.requestAnimationFrame(() => {
             this[ symbols.RENDER ]();
 
@@ -123,10 +123,10 @@ class Widget extends Event.Emitter {
 
         webgl.attach(canvas);
 
-        for (const child of this[ symbols.CHILDREN ]) {
-            const cache = child[ symbols.CACHE ];
-            const x = child[ symbols.X ];
-            const y = child[ symbols.Y ];
+        for (const widget of this[ symbols.TREE ]) {
+            const cache = widget[ symbols.CACHE ];
+            const x = widget[ symbols.X ];
+            const y = widget[ symbols.Y ];
 
             webgl.uniform('wtk_Texture', cache);
             webgl.texture(webgl.context.TEXTURE_2D, webgl.context.TEXTURE_MAG_FILTER, webgl.context.NEAREST);
