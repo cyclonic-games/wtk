@@ -1,13 +1,18 @@
 const Event = require('./Event');
 
 const diff = require('../system/diff');
+const state = require('../system/state');
 const symbols = require('../system/symbols');
 
 class Widget extends Event.Emitter {
 
     [ symbols.RENDER ] () {
+        state.get(symbols.OWNER).push(this);
+
         const before = this[ symbols.TREE ];
         const after = this.render();
+
+        state.get(symbols.OWNER).pop();
 
         if (before.length > after.length) {
             this[ symbols.TREE ] = before.map((widget, i) => diff(widget, after[ i ]));
@@ -16,15 +21,15 @@ class Widget extends Event.Emitter {
             this[ symbols.TREE ] = after.map((widget, i) => diff(before[ i ], widget));
         }
 
-        for (const widget of this[ symbols.TREE ]) {
-            widget[ symbols.PARENT ] = this;
-        }
-
         this.emit('render', null);
     }
 
     [ symbols.PAINT ] () {
-        // TODO
+        for (const widget of this[ symbols.TREE ]) if (widget) {
+            widget[ symbols.PAINT ]();
+        }
+
+        this.paint();
         this.emit('paint', null);
     }
 
@@ -44,6 +49,18 @@ class Widget extends Event.Emitter {
         return this[ symbols.CHILDREN ];
     }
 
+    get id () {
+        return this[ symbols.ID ];
+    }
+
+    set id (id) {
+        this[ symbols.ID ] = id;
+    }
+
+    get owner () {
+        return this[ symbols.OWNER ];
+    }
+
     get parent () {
         return this[ symbols.PARENT ];
     }
@@ -56,6 +73,10 @@ class Widget extends Event.Emitter {
         return { };
     }
 
+    set style (style) {
+        this[ symbols.STYLE ].assigned = style;
+    }
+
     constructor (properties = { }, children = [ ]) {
         super();
 
@@ -63,14 +84,19 @@ class Widget extends Event.Emitter {
             [ symbols.CACHE ]: global.document.createElement('canvas'),
             [ symbols.CHILDREN ]: children,
             [ symbols.CYCLE ]: new Widget.LifeCycle(this),
-            [ symbols.GEOMETRY ]: [ ],
-            [ symbols.INTERFACE ]: null,
+            [ symbols.ID ]: null,
+            [ symbols.OWNER ]: state.get(symbols.OWNER)[ state.get(symbols.OWNER).length - 1 ],
             [ symbols.PARENT ]: null,
             [ symbols.STATE ]: new Widget.State(this, Object.entries(this.constructor.initialState)),
             [ symbols.STYLE ]: new Widget.Style(this),
-            [ symbols.TREE ]: [ ],
-            [ symbols.WEBGL ]: null
+            [ symbols.TREE ]: children,
+            [ symbols.X ]: 0,
+            [ symbols.Y ]: 0
         });
+
+        for (const child of children) {
+            child[ symbols.PARENT ] = this;
+        }
 
         global.requestAnimationFrame(() => {
             this[ symbols.RENDER ]();
@@ -92,7 +118,39 @@ class Widget extends Event.Emitter {
     }
 
     paint () {
-        void 0;
+        const canvas = this[ symbols.CACHE ];
+        const webgl = state.get(symbols.WEBGL);
+
+        webgl.attach(canvas);
+
+        for (const child of this[ symbols.CHILDREN ]) {
+            const cache = child[ symbols.CACHE ];
+            const x = child[ symbols.X ];
+            const y = child[ symbols.Y ];
+
+            webgl.uniform('wtk_Texture', cache);
+            webgl.texture(webgl.context.TEXTURE_2D, webgl.context.TEXTURE_MAG_FILTER, webgl.context.NEAREST);
+
+            webgl.input('wtk_Sample', new Float32Array([
+                0, 0,
+                1, 0,
+                0, 1,
+                0, 1,
+                1, 0,
+                1, 1
+            ]));
+
+            webgl.input('wtk_Coordinates', new Float32Array([
+                x, y,
+                x + cache.width, y,
+                x, y + cache.height,
+                x, y + cache.height,
+                x + cache.width, y,
+                x + cache.width, y + cache.height
+            ]));
+
+            webgl.draw(6);
+        }
     }
 
     render () {
@@ -110,6 +168,7 @@ Widget.LifeCycle = class WidgetLifeCycle {
         widget.subscribe('render').forEach(event => this.handle(event));
         widget.subscribe('ready').forEach(event => this.handle(event));
         widget.subscribe('update').forEach(event => this.handle(event));
+
         this.widget = widget;
     }
 
@@ -126,6 +185,8 @@ Widget.State = class WidgetState extends Map {
 
     constructor (widget, data) {
         super(data);
+
+        this.modifier = 'default';
         this.widget = widget;
     }
 
@@ -137,28 +198,24 @@ Widget.State = class WidgetState extends Map {
 
 Widget.Style = class WidgetStyle {
 
-    get fill () {
-
-    }
-
-    get height () {
-
-    }
-
-    get sample () {
-
-    }
-
-    get stroke () {
-
-    }
-
-    get width () {
-
-    }
-
     constructor (widget) {
+        this.assigned = { };
         this.widget = widget;
+    }
+
+    get (id) {
+        const assigned = this.assigned;
+        const modifier = this.modifier;
+        const modified = this.widget.style[ modifier ][ id ]
+        const original = this.widget.style.default[ id ];
+
+        if (id === symbols.HOST) {
+            const inherited = this.widget.owner.style[ modifier ][ this.id ];
+
+            return Object.assign({ }, original, modified, inherited, assigned);
+        }
+
+        return Object.assign({ }, original, modified, assigned);
     }
 };
 

@@ -1,11 +1,16 @@
 module.exports = {
-    ADD: Symbol('ADD'),
+    CACHE: Symbol('CACHE'),
     CHILDREN: Symbol('CHILDREN'),
-    CREATE: Symbol('CREATE'),
-    DIFF: Symbol('DIFF'),
+    CYCLE: Symbol('CYCLE'),
+    HOST: Symbol('HOST'),
+    ID: Symbol('ID'),
+    OWNER: Symbol('OWNER'),
     PAINT: Symbol('PAINT'),
-    REMOVE: Symbol('REMOVE'),
+    PARENT: Symbol('PARENT'),
     RENDER: Symbol('RENDER'),
+    STATE: Symbol('STATE'),
+    STYLE: Symbol('STYLE'),
     TREE: Symbol('TREE'),
-    UPDATE: Symbol('UPDATE')
+    UPDATE: Symbol('UPDATE'),
+    WEBGL: Symbol('WEBGL')
 };
