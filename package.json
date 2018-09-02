@@ -4,7 +4,7 @@
   "description": "WebGL Toolkit",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "_": "webpack && http-server _/"
   },
   "repository": {
     "type": "git",
@@ -15,5 +15,13 @@
   "bugs": {
     "url": "https://github.com/cyclonic-games/wtk/issues"
   },
-  "homepage": "https://github.com/cyclonic-games/wtk#readme"
+  "homepage": "https://github.com/cyclonic-games/wtk#readme",
+  "devDependencies": {
+    "webpack": "^4.17.1",
+    "webpack-cli": "^3.1.0"
+  },
+  "dependencies": {
+    "picasso": "github:cyclonic-games/picasso",
+    "quantum": "github:cyclonic-games/quantum"
+  }
 }

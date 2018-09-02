@@ -1,4 +1,9 @@
-const Event = require('./Event');
+const Painter = require('picasso/core/Painter');
+
+const Event = require('quantum/core/Event');
+
+const fragment = require('../shaders/fragment');
+const vertex = require('../shaders/vertex');
 
 const diff = require('../system/diff');
 const state = require('../system/state');
@@ -94,9 +99,19 @@ class Widget extends Event.Emitter {
             [ symbols.STATE ]: new Widget.State(this, Object.entries(this.constructor.initialState)),
             [ symbols.STYLE ]: new Widget.Style(this),
             [ symbols.TREE ]: children,
+            [ symbols.WEBGL ]: new Widget.Painter(this),
             [ symbols.X ]: 0,
             [ symbols.Y ]: 0
         });
+
+        this[ symbols.WEBGL ].attach(this[ symbols.CACHE ]);
+        this[ symbols.WEBGL ].initialize('wtk', fragment, vertex);
+        this[ symbols.WEBGL ].uniform('wtk_Resolution', new Float32Array([
+            this[ symbols.CACHE ].width,
+            this[ symbols.CACHE ].height
+        ]));
+
+        console.log(this.constructor, this[ symbols.CACHE ].width, this[ symbols.CACHE ].height);
 
         global.requestAnimationFrame(() => {
             this[ symbols.RENDER ]();
@@ -119,7 +134,7 @@ class Widget extends Event.Emitter {
 
     paint () {
         const canvas = this[ symbols.CACHE ];
-        const webgl = state.get(symbols.WEBGL);
+        const webgl = this[ symbols.WEBGL ];
 
         webgl.attach(canvas);
 
@@ -181,12 +196,20 @@ Widget.LifeCycle = class WidgetLifeCycle {
     }
 };
 
+Widget.Painter = class WidgetPainter extends Painter {
+
+    constructor (widget) {
+        super();
+
+        this.widget = widget;
+    }
+};
+
 Widget.State = class WidgetState extends Map {
 
     constructor (widget, data) {
         super(data);
 
-        this.modifier = 'default';
         this.widget = widget;
     }
 
@@ -200,6 +223,7 @@ Widget.Style = class WidgetStyle {
 
     constructor (widget) {
         this.assigned = { };
+        this.modifier = 'default';
         this.widget = widget;
     }
 
