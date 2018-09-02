@@ -12,12 +12,12 @@ class Rectangle extends Widget {
         return {
             default: {
                 [ symbols.HOST ]: {
-                    width: 100,
-                    height: 100,
+                    width: 1,
+                    height: 1,
                     fill: rgba(0, 0, 0, 255),
                     sample: sample(0, 0, 1, 1),
-                    stroke: rgba(255, 0, 0, 255),
-                    border: 12,
+                    stroke: rgba(0, 0, 0, 255),
+                    border: 0,
                     shadow: rgba(0, 0, 0, 255),
                     blur: 0
                 }
@@ -43,68 +43,66 @@ class Rectangle extends Widget {
             canvas.height
         ]));
 
-        webgl.uniform('wtk_Texture', fill);
-        webgl.texture(webgl.context.TEXTURE_2D, webgl.context.TEXTURE_MAG_FILTER, webgl.context.NEAREST);
+        if (fill) {
+            webgl.uniform('wtk_Texture', fill);
+            webgl.texture(webgl.context.TEXTURE_2D, webgl.context.TEXTURE_MAG_FILTER, webgl.context.NEAREST);
 
-        webgl.input('wtk_Sample', sample);
+            webgl.input('wtk_Sample', sample);
 
-        webgl.input('wtk_Coordinates', new Float32Array([
-            border, border,
-            width + border, border,
-            border, height + border,
-            border, height + border,
-            width + border, border,
-            width + border, height + border
-        ]));
+            webgl.input('wtk_Coordinates', new Float32Array([
+                border, border,
+                width + border, border,
+                border, height + border,
+                border, height + border,
+                width + border, border,
+                width + border, height + border
+            ]));
 
-        webgl.draw(6);
+            webgl.draw(6);
+        }
 
         if (border) {
-            const coordinates = [
-                new Float32Array([
-                    0, 0,
-                    width + (border * 2), 0,
-                    border, border,
-                    border, border,
-                    width + (border * 2), 0,
-                    width + border, border
-                ]),
-                new Float32Array([
-                    width + border, border,
-                    width + (border * 2), 0,
-                    width + border, height + border,
-                    width + border, height + border,
-                    width + (border * 2), 0,
-                    width + (border * 2), height + (border * 2)
-                ]),
-                new Float32Array([
-                    border, height + border,
-                    width + border, height + border,
-                    0, height + (border * 2),
-                    0, height + (border * 2),
-                    width + border, height + border,
-                    width + (border * 2), height + (border * 2)
-                ]),
-                new Float32Array([
-                    0, 0,
-                    border, border,
-                    0, height + (border * 2),
-                    0, height + (border * 2),
-                    border, border,
-                    border, height + border
-                ])
-            ];
+            webgl.uniform('wtk_Texture', stroke);
+            webgl.texture(webgl.context.TEXTURE_2D, webgl.context.TEXTURE_MAG_FILTER, webgl.context.NEAREST);
 
-            for (let i = 0, count = 4; i < count; i++) {
-                webgl.uniform('wtk_Texture', stroke);
-                webgl.texture(webgl.context.TEXTURE_2D, webgl.context.TEXTURE_MAG_FILTER, webgl.context.NEAREST);
+            webgl.input('wtk_Sample', new Float32Array([
+                ...sample,
+                ...sample,
+                ...sample,
+                ...sample
+            ]));
 
-                webgl.input('wtk_Sample', sample);
+            webgl.input('wtk_Coordinates', new Float32Array([
+                0, 0,
+                width + (border * 2), 0,
+                border, border,
+                border, border,
+                width + (border * 2), 0,
+                width + border, border,
 
-                webgl.input('wtk_Coordinates', coordinates[ i ]);
+                width + border, border,
+                width + (border * 2), 0,
+                width + border, height + border,
+                width + border, height + border,
+                width + (border * 2), 0,
+                width + (border * 2), height + (border * 2),
 
-                webgl.draw(6);
-            }
+                border, height + border,
+                width + border, height + border,
+                0, height + (border * 2),
+                0, height + (border * 2),
+                width + border, height + border,
+                width + (border * 2), height + (border * 2),
+
+                0, 0,
+                border, border,
+                0, height + (border * 2),
+                0, height + (border * 2),
+                border, border,
+                border, height + border
+            ]));
+
+            webgl.draw(6 * 4);
         }
     }
 }

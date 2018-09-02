@@ -89,7 +89,7 @@ class Widget extends Event.Emitter {
     constructor (properties = { }, children = [ ]) {
         super();
 
-        Object.assign(this, this.constructor.defaultProperties, properties, {
+        Object.assign(this, {
             [ symbols.CACHE ]: global.document.createElement('canvas'),
             [ symbols.CHILDREN ]: children,
             [ symbols.CYCLE ]: new Widget.LifeCycle(this),
@@ -111,7 +111,7 @@ class Widget extends Event.Emitter {
             this[ symbols.CACHE ].height
         ]));
 
-        console.log(this.constructor, this[ symbols.CACHE ].width, this[ symbols.CACHE ].height);
+        Object.assign(this, this.constructor.defaultProperties, properties);
 
         global.requestAnimationFrame(() => {
             this[ symbols.RENDER ]();
@@ -234,7 +234,7 @@ Widget.Style = class WidgetStyle {
         const original = this.widget.style.default[ id ];
 
         if (id === symbols.HOST) {
-            const inherited = this.widget.owner.style[ modifier ][ this.id ];
+            const inherited = this.widget.owner.style[ modifier ][ this.widget.id ];
 
             return Object.assign({ }, original, modified, inherited, assigned);
         }

@@ -7,8 +7,6 @@ function paint (widget) {
     const x = widget[ symbols.X ];
     const y = widget[ symbols.Y ];
 
-    console.log(webgl);
-
     webgl.uniform('wtk_Texture', cache);
     webgl.texture(webgl.context.TEXTURE_2D, webgl.context.TEXTURE_MAG_FILTER, webgl.context.NEAREST);
 
